@@ -105,10 +105,13 @@ except:
 	config = default
 
 
-parser = argparse.ArgumentParser(description='Downloads images from xkcd and make wallpapers out of them.')
+parser = argparse.ArgumentParser(description='Downloads images from xkcd and make wallpapers out of them.',
+                                 epilog=('All options can be defined in the configuration file %s. '+
+                                        'Command line options override configuration file options. '+
+                                        'See %s for an example file.') % (config_file, os.path.join(os.path.dirname(__file__),"config.example")))
 parser.add_argument('-i', '--info',
                    dest='mode', action='store_const', const=0, default=config["mode"],
-                   help='Only show details of the comic'+(config["mode"]==0 and " (default)" or ""))
+                   help='Download nothing, only show details of the comic'+(config["mode"]==0 and " (default)" or ""))
 parser.add_argument('-d', '--download',
                    dest='mode', action='store_const', const=1, default=config["mode"],
                    help='Download the image without editing it'+(config["mode"]==1 and " (default)" or ""))

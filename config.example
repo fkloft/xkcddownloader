@@ -1,0 +1,19 @@
+{
+	"mode":       2,
+	"comic":      null,
+	"random":     false,
+	"output":     "~/xkcd.png",
+	"width":      null,
+	"height":     null,
+	"top":        30,
+	"bottom":     30,
+	"left":       50,
+	"right":      50,
+	"background": "white",
+	"fontcolor":  "black",
+	"font":       "~/.fonts/xkcd.ttf",
+	"title":      35,
+	"desc":       25,
+	"scale":      false,
+	"set":        false
+}
