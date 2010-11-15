@@ -41,7 +41,13 @@ default = \
 	"scale": False,
 	
 	# set as desktop wallpaper
-	"set": False
+	"set": False,
+	
+	# attribution
+	"attribution": True,
+	# padding
+	"attributionX": 5,
+	"attributionY": 25
 }
 
 def merge_config(config={}):
@@ -64,7 +70,7 @@ def merge_config(config={}):
 		except:
 			pass
 	
-	for i in ("top", "bottom", "left", "right", "title", "desc"):
+	for i in ("top", "bottom", "left", "right", "title", "desc", "attributionX", "attributionY"):
 		try:
 			value = int(config[i])
 			if value >= 0:
@@ -72,7 +78,7 @@ def merge_config(config={}):
 		except:
 			pass
 	
-	for i in ("random", "scale", "set"):
+	for i in ("random", "scale", "set", "attribution"):
 		try:
 			if i in config:
 				new[i] = bool(config[i])
@@ -103,7 +109,6 @@ try:
 except:
 	print "couldn't load configuration file, using defaults"
 	config = default
-
 
 parser = argparse.ArgumentParser(description='Downloads images from xkcd and make wallpapers out of them.',
                                  epilog=('All options can be defined in the configuration file %s. '+
@@ -170,6 +175,18 @@ parser.add_argument('-u', '--scale',
 parser.add_argument('-U', '--noscale', dest="scale",
                    action='store_const', const=False, default=config["scale"],
                    help='Don\'t scale the image if it is smaller than the available space (useful to override config file)')
+parser.add_argument('-a', '--attribution',
+                   action='store_const', const=True, default=config["attribution"],
+                   help='Add CC-BY-NC attribution in the wallpaper (Do this if you want to distribute the wallpaper)')
+parser.add_argument('-A', '--noattribution', dest="attribution",
+                   action='store_const', const=False, default=config["attribution"],
+                   help='Don\'t add attribution (useful to override config file)')
+parser.add_argument('-X', '--attributionX',
+                   action='store', default=config["attributionX"], type=int, metavar="NUM",
+                   help='Padding between attribution and right edge. Default is %s' % config["attributionX"])
+parser.add_argument('-Y', '--attributionY',
+                   action='store', default=config["attributionY"], type=int, metavar="NUM",
+                   help='Padding between attribution and bottom edge. Default is %s' % config["attributionY"])
 parser.add_argument('-s', '--set',
                    action='store_const', const=True, default=config["set"],
                    help='Set as desktop wallpaper (GNOME only)')
@@ -179,5 +196,4 @@ parser.add_argument('-S', '--noset', dest="set",
 args = parser.parse_args()
 
 arguments = dict([(i, getattr(args, i)) for i in default.keys()])
-
 

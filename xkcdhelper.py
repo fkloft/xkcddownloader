@@ -51,9 +51,8 @@ def draw_text(font, text, maxwidth, image=None, x=None, y=None, color=(0,0,0)):
 	
 	return y
 
-def add_attribution(image, font, color):
+def add_attribution(image, font, color, right=5, bottom=5):
 	import os, sys
-	padding = 5
 	folder = os.path.dirname(__file__)
 	cc = Image.open(os.path.join(folder, "cc-by-nc.png"))
 	
@@ -61,11 +60,11 @@ def add_attribution(image, font, color):
 	font = ImageFont.truetype(font, 20)
 	size = font.getsize(text)
 	draw = ImageDraw.Draw(image)
-	pos = [image.size[0]-size[0]-padding, image.size[1]-size[1]-padding]
+	pos = [image.size[0]-size[0]-right, image.size[1]-size[1]-bottom]
 	draw.text(pos, text, font=font, fill=color)
 	
-	pos[0] -= cc.size[0]+padding
-	pos[1] = image.size[1]-padding-cc.size[1]
+	pos[0] -= cc.size[0]+5
+	pos[1] = image.size[1]-bottom-cc.size[1]
 	image.paste(cc, tuple(pos), cc)
 
 def set_wallpaper(filename):

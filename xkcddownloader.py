@@ -100,7 +100,12 @@ elif arguments["mode"] == 2:
 		font = ImageFont.truetype(os.path.expanduser(arguments["font"]), arguments["desc"])
 		y = draw_text(font, desc, size[0]-arguments["left"]-arguments["right"], wallpaper, arguments["left"], y, color=ImageColor.getrgb(arguments["fontcolor"]))
 	
-	add_attribution(wallpaper, os.path.expanduser(arguments["font"]), ImageColor.getrgb(arguments["fontcolor"]))
+	if arguments["attribution"]:
+		add_attribution(wallpaper,
+		                os.path.expanduser(arguments["font"]),
+		                ImageColor.getrgb(arguments["fontcolor"]),
+		                arguments["attributionX"],
+		                arguments["attributionY"])
 	
 	wallpaper.save(os.path.expanduser(arguments["output"]))
 	
