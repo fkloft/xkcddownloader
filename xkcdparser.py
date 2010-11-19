@@ -12,6 +12,9 @@ def get_info(comic=None):
 			raise TypeError("Comic must be an integer or None")
 	
 	parser = HTMLParser.HTMLParser()
+	def unescape(string):
+		string = parser.unescape(string.decode("utf-8"))
+		return string
 	
 	if comic is None:
 		req = urllib2.urlopen("http://xkcd.com/")
@@ -19,7 +22,7 @@ def get_info(comic=None):
 		try:
 			req = urllib2.urlopen("http://xkcd.com/%d"%comic)
 		except urllib2.HTTPError:
-			raise ValueError("Invalid comic ID")
+			raise ValueError("Invalid comic ID % 2d" % comic)
 	
 	line = req.readline()
 	while not ' id="middleContent"' in line:
@@ -29,7 +32,7 @@ def get_info(comic=None):
 		line = req.readline()
 	
 	match = re.search('<h1>([^<]+)<\/h1>', line)
-	title = parser.unescape(match.group(1))
+	title = unescape(match.group(1))
 	
 	while not '<img ' in line:
 		line = req.readline()
@@ -38,7 +41,7 @@ def get_info(comic=None):
 	src = match.group(1)
 	
 	match = re.search('title="([^"]+)"', line)
-	desc = parser.unescape(match.group(1))
+	desc = unescape(match.group(1))
 	
 	if comic is None:
 		while not 'Permanent link' in line:
@@ -58,3 +61,4 @@ def get_info(comic=None):
 
 if __name__ == "__main__":
 	print get_info()
+
