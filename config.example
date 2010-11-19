@@ -14,6 +14,7 @@
 	"font":         "~/.fonts/xkcd.ttf",
 	"title":        35,
 	"desc":         25,
+	"id":           false,
 	"scale":        false,
 	"large":        true,
 	"set":          false,

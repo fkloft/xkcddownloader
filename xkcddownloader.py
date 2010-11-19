@@ -62,6 +62,8 @@ elif arguments["mode"] == 2:
 	fontheight = 0
 	
 	if arguments["title"] > 0:
+		if arguments["id"]:
+			title = "%d: %s" % (info["comic"], title)
 		font = ImageFont.truetype(os.path.expanduser(arguments["font"]), arguments["title"])
 		fontheight += draw_text(font, title, width-arguments["left"]-arguments["right"])
 	
