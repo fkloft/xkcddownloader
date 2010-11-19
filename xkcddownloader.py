@@ -111,7 +111,7 @@ elif arguments["mode"] == 2:
 	
 	if arguments["set"]:
 		set_wallpaper(os.path.abspath(os.path.expanduser(arguments["output"])))
-
+	
 else:
 	raise Exception("Invalid mode!")
 
