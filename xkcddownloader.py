@@ -51,13 +51,12 @@ elif arguments["mode"] == 2:
 	
 	source = (arguments["large"] and info["large"]) or info["image"]
 	req = urllib2.urlopen(source)
-	fh = tempfile.NamedTemporaryFile(mode='wb', suffix='png', delete=False)
-	tempname = fh.name
+	fh = tempfile.TemporaryFile(suffix='png')
 	fh.write(req.read())
-	fh.close()
+	fh.seek(0)
 	req.close()
 	
-	comic = Image.open(os.path.expanduser(tempname))
+	comic = Image.open(fh)
 	wallpaper = Image.new("RGB", (width, height), ImageColor.getrgb(arguments["background"]))
 	
 	fontheight = 0
