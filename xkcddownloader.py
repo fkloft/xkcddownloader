@@ -16,8 +16,16 @@ arguments["output"] = arguments["output"].replace("%title", info["title"]).repla
 
 
 if arguments["mode"] == 0:
-	print "Comic:\n%d\nTitle:\n%s\nDescription:\n%s\nImage:\n%s" % \
-	      (info["comic"], info["title"], info["desc"], info["image"])
+	keys = \
+	{
+		"comic": "Comic:       ",
+		"title": "Title:       ",
+		"desc":  "Description: ",
+		"image": "Image:       ",
+		"large": "Large Image: ",
+		"link":  "Link:        "
+	}
+	print "".join([(info[i] and "%s%s\n"%(keys[i],info[i])) or "" for i in keys.keys()])
 
 elif arguments["mode"] == 1:
 	req = urllib2.urlopen(info["image"])
@@ -41,7 +49,8 @@ elif arguments["mode"] == 2:
 	
 	size = (width, height)
 	
-	req = urllib2.urlopen(info["image"])
+	source = (arguments["large"] and info["large"]) or info["image"]
+	req = urllib2.urlopen(source)
 	fh = tempfile.NamedTemporaryFile(mode='wb', suffix='png', delete=False)
 	tempname = fh.name
 	fh.write(req.read())

@@ -51,6 +51,9 @@ default = \
 	# scale comic to image size, even if it is smaller
 	"scale": False,
 	
+	# use large version of the comic
+	"large": True,
+	
 	# set as desktop wallpaper
 	"set": False,
 	
@@ -89,7 +92,7 @@ def merge_config(config={}, base=None):
 		except:
 			pass
 	
-	for i in ("random", "scale", "set", "attribution"):
+	for i in ("random", "scale", "set", "attribution", "large"):
 		try:
 			if i in config:
 				new[i] = bool(config[i])
@@ -137,13 +140,20 @@ def parse_args(config):
 	                   action='store', default=config["output"], type=str, metavar="FILE",
 	                   help='Specify the output file when downloading an image or making a wallpaper.\n\
 	                         %%%%comic is replaced by the number of the comic, %%%%title likewise. (default: %s)' % config["output"])
-	uscale = parser.add_mutually_exclusive_group()
-	uscale.add_argument('-u', '--scale',
+	scale  = parser.add_mutually_exclusive_group()
+	scale .add_argument('-u', '--scale',
 	                   action='store_const', const=True, default=config["scale"],
 	                   help='Upscale the image if it is smaller than the available space')
-	uscale.add_argument('-U', '--noscale', dest="scale",
+	scale .add_argument('-U', '--noscale', dest="scale",
 	                   action='store_const', const=False, default=config["scale"],
 	                   help='Don\'t scale the image if it is smaller than the available space (useful to override config file)')
+	large  = parser.add_mutually_exclusive_group()
+	large .add_argument('-m', '--large',
+	                   action='store_const', const=True, default=config["large"],
+	                   help='Use the large version of the comic. This works only with some special comics (e.g. 657)'+(config["large"] and " (default)" or ""))
+	large .add_argument('-M', '--nolarge', dest="large",
+	                   action='store_const', const=False, default=config["large"],
+	                   help='Don\'t use the large image (useful to override config file)'+(config["large"] and " (default)" or ""))
 	parser.add_argument('-x', '--width',
 	                   action='store', default=config["width"], type=int, metavar="NUM",
 	                   help='Specify the width when making a wallpaper (default: %s)'%(config["width"]==None and "use current screen resolution" or config["width"]))

@@ -15,6 +15,7 @@
 	"title":        35,
 	"desc":         25,
 	"scale":        false,
+	"large":        true,
 	"set":          false,
 	"attribution":  true,
 	"attributionX": 5,
