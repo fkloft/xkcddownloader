@@ -25,7 +25,7 @@ if arguments["mode"] == 0:
 		"large": "Large Image: ",
 		"link":  "Link:        "
 	}
-	print "".join([(info[i] and "%s%s\n"%(keys[i],info[i])) or "" for i in keys.keys()])
+	print ("").join([((info[i] and "%s%s\n"%(keys[i],info[i])) or "") for i in keys.keys()])
 
 elif arguments["mode"] == 1:
 	req = urllib2.urlopen(info["image"])
@@ -39,7 +39,7 @@ elif arguments["mode"] == 2:
 	desc  = info["desc"]
 	
 	if not os.path.exists(os.path.expanduser(arguments["font"])):
-		print "Couldn't find font file!\nPlease define path to a .ttf file!\nThe given path was: %s" % os.path.expanduser(arguments["font"])
+		print ("Couldn't find font file!\nPlease define path to a .ttf file!\nThe given path was: %s") % os.path.expanduser(arguments["font"])
 		quit()
 	
 	if arguments["width"]==None or arguments["height"]==None:
