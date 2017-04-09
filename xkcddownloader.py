@@ -1,83 +1,79 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import argparse, Image, ImageColor, ImageDraw, ImageFont, os, tempfile, urllib2, xkcdparser, xkcdsettings
-from xkcdhelper import *
+import argparse
+import io
+import json
+import os
+import requests
 
-arguments = xkcdsettings.arguments;
+from PIL import Image, ImageColor, ImageFont
 
-if arguments["random"]:
+import helper
+import parser
+import settings
+
+config = settings.config;
+
+if config["random"]:
 	import random
-	current = xkcdparser.get_info(None)["comic"]
-	arguments["comic"] = random.randint(1,current)
+	current = parser.get_info()["num"]
+	config["comic"] = random.randint(1, current)
 
-info = xkcdparser.get_info(arguments["comic"])
+info = parser.get_info(config["comic"])
 
-arguments["output"] = arguments["output"].replace("%title", info["title"]).replace("%comic", str(info["comic"]))
+config["output"] = config["output"].replace("%title", info["title"]).replace("%comic", str(info["num"]))
 
 
-if arguments["mode"] == 0:
-	keys = \
-	{
-		"comic": "Comic:       ",
-		"title": "Title:       ",
-		"desc":  "Description: ",
-		"image": "Image:       ",
-		"large": "Large Image: ",
-		"link":  "Link:        "
-	}
-	print ("").join([((info[i] and "%s%s\n"%(keys[i],info[i])) or "") for i in keys.keys()])
+if config["mode"] == 0:
+	print(json.dumps(info, sort_keys=True, indent=True))
 
-elif arguments["mode"] == 1:
-	req = urllib2.urlopen(info["image"])
-	fh = open(os.path.expanduser(arguments["output"]), "wb")
-	fh.write(req.read())
+elif config["mode"] == 1:
+	source = (config["large"] and info["large"]) or info["img"]
+	req = requests.get(source)
+	fh = open(os.path.expanduser(config["output"]), "wb")
+	fh.write(req.content)
 	fh.close()
-	req.close()
 
-elif arguments["mode"] == 2:
+elif config["mode"] == 2:
 	title = info["title"]
-	desc  = info["desc"]
+	alt = info["alt"]
 	
-	if not os.path.exists(os.path.expanduser(arguments["font"])):
-		print ("Couldn't find font file!\nPlease define path to a .ttf file!\nThe given path was: %s") % os.path.expanduser(arguments["font"])
+	if not os.path.exists(os.path.expanduser(config["font"])):
+		print ("Couldn't find font file!\nPlease define path to a .ttf file!\nThe given path was: %s") % os.path.expanduser(config["font"])
 		quit()
 	
-	if arguments["width"]==None or arguments["height"]==None:
-		screen = get_screen_size()
-		width  = arguments["width"]  or screen[0] or 1024
-		height = arguments["height"] or screen[1] or 768
+	if config["width"] == None or config["height"] == None:
+		screen = helper.get_screen_size()
+		width  = config["width"]  or screen[0] or 1024
+		height = config["height"] or screen[1] or 768
 	
 	size = (width, height)
 	
-	source = (arguments["large"] and info["large"]) or info["image"]
-	req = urllib2.urlopen(source)
-	fh = tempfile.TemporaryFile(suffix='png')
-	fh.write(req.read())
-	fh.seek(0)
-	req.close()
+	source = (config["large"] and info["large"]) or info["img"]
+	req = requests.get(source)
+	comic = Image.open(io.BytesIO(req.content))
 	
-	comic = Image.open(fh)
-	wallpaper = Image.new("RGB", (width, height), ImageColor.getrgb(arguments["background"]))
+	wallpaper = Image.new("RGB", (width, height), ImageColor.getrgb(config["background"]))
 	
 	fontheight = 0
 	
-	if arguments["title"] > 0:
-		if arguments["id"]:
-			title = "%d: %s" % (info["comic"], title)
-		font = ImageFont.truetype(os.path.expanduser(arguments["font"]), arguments["title"])
-		fontheight += draw_text(font, title, width-arguments["left"]-arguments["right"])
+	if config["title"] > 0:
+		if config["id"]:
+			title = "%d: %s" % (info["num"], title)
+		font = ImageFont.truetype(os.path.expanduser(config["font"]), config["title"])
+		fontheight += helper.draw_text(font, title, width-config["left"]-config["right"])
 	
-	if arguments["desc"] > 0:
-		font = ImageFont.truetype(os.path.expanduser(arguments["font"]), arguments["desc"])
-		fontheight += draw_text(font, desc, width-arguments["left"]-arguments["right"])
+	if config["desc"] > 0:
+		font = ImageFont.truetype(os.path.expanduser(config["font"]), config["desc"])
+		fontheight += helper.draw_text(font, alt, width-config["left"]-config["right"])
 	
-	maxheight = height-arguments["top"]-arguments["bottom"]-fontheight
-	maxwidth = width-arguments["left"]-arguments["right"]
+	maxheight = height-config["top"]-config["bottom"]-fontheight
+	maxwidth = width-config["left"]-config["right"]
 	
 	width  = comic.size[0]
 	height = comic.size[1]
 	
-	if arguments["scale"] == False:
+	if config["scale"] == False:
 		if width<maxwidth and height>maxheight:
 			width = width*maxheight/height
 			height = maxheight
@@ -86,7 +82,7 @@ elif arguments["mode"] == 2:
 			height = height*maxwidth/width
 			width = maxwidth
 	
-	if (height>maxheight and width>maxwidth) or arguments["scale"] == True:
+	if (height>maxheight and width>maxwidth) or config["scale"] == True:
 		if width/height > maxwidth/maxheight:
 			height = height*maxwidth/width
 			width = maxwidth
@@ -94,33 +90,36 @@ elif arguments["mode"] == 2:
 			width = width*maxheight/height
 			height = maxheight
 	
+	width = round(width)
+	height = round(height)
+	
 	if (width, height) != comic.size:
 		comic = comic.resize((width, height), Image.ANTIALIAS)
 	
-	y = (maxheight-height)/2 + arguments["top"]
+	y = (maxheight-height)/2 + config["top"]
 	
-	if arguments["title"] > 0:
-		font = ImageFont.truetype(os.path.expanduser(arguments["font"]), arguments["title"])
-		y = draw_text(font, title, size[0]-arguments["left"]-arguments["right"], wallpaper, arguments["left"], y, color=ImageColor.getrgb(arguments["fontcolor"]))
+	if config["title"] > 0:
+		font = ImageFont.truetype(os.path.expanduser(config["font"]), config["title"])
+		y = helper.draw_text(font, title, size[0]-config["left"]-config["right"], wallpaper, config["left"], y, color=ImageColor.getrgb(config["fontcolor"]))
 	
-	wallpaper.paste(comic, ((maxwidth-width)/2+arguments["left"], y))
+	wallpaper.paste(comic, (round((maxwidth-width)/2+config["left"]), round(y)))
 	y += height
 	
-	if arguments["desc"] > 0:
-		font = ImageFont.truetype(os.path.expanduser(arguments["font"]), arguments["desc"])
-		y = draw_text(font, desc, size[0]-arguments["left"]-arguments["right"], wallpaper, arguments["left"], y, color=ImageColor.getrgb(arguments["fontcolor"]))
+	if config["desc"] > 0:
+		font = ImageFont.truetype(os.path.expanduser(config["font"]), config["desc"])
+		y = helper.draw_text(font, alt, size[0]-config["left"]-config["right"], wallpaper, config["left"], y, color=ImageColor.getrgb(config["fontcolor"]))
 	
-	if arguments["attribution"]:
-		add_attribution(wallpaper,
-		                os.path.expanduser(arguments["font"]),
-		                ImageColor.getrgb(arguments["fontcolor"]),
-		                arguments["attributionX"],
-		                arguments["attributionY"])
+	if config["attribution"]:
+		helper.add_attribution(wallpaper,
+			os.path.expanduser(config["font"]),
+			ImageColor.getrgb(config["fontcolor"]),
+			config["attributionX"],
+			config["attributionY"])
 	
-	wallpaper.save(os.path.expanduser(arguments["output"]))
+	wallpaper.save(os.path.expanduser(config["output"]))
 	
-	if arguments["set"]:
-		set_wallpaper(os.path.abspath(os.path.expanduser(arguments["output"])))
+	if config["set"]:
+		set_wallpaper(os.path.abspath(os.path.expanduser(config["output"])))
 	
 else:
 	raise Exception("Invalid mode!")

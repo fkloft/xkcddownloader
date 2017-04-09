@@ -1,6 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import os, json, argparse
+import argparse
+import json
+import os
+import sys
 
 folder = os.path.dirname(__file__)
 config_file = "$HOME/.xkcddownloader"
@@ -36,8 +39,8 @@ default = \
 	"height": None,
 	
 	# padding
-	"top":    30,
-	"bottom": 30,
+	"top":    50,
+	"bottom": 50,
 	"left":   50,
 	"right":  50,
 	
@@ -63,7 +66,7 @@ default = \
 	# attribution
 	"attribution": True,
 	# padding
-	"attributionX": 5,
+	"attributionX": 15,
 	"attributionY": 25
 }
 
@@ -213,35 +216,36 @@ def parse_args(config):
 	desktop = parser.add_mutually_exclusive_group()
 	desktop.add_argument('-s', '--set',
 	                    action='store_const', const=True, default=config["set"],
-	                    help='Set as desktop wallpaper (GNOME only)')
+	                    help='Set as desktop wallpaper')
 	desktop.add_argument('-S', '--noset', dest="set",
 	                    action='store_const', const=False, default=config["set"],
 	                    help='Don\'t set as desktop wallpaper (useful to override config file)')
 	args = parser.parse_args()
 	
-	new = dict([(i, getattr(args, i)) for i in default.keys()])
-	return new
+	if args.comic:
+		args.random = False
+	
+	return {i: getattr(args, i) for i in default.keys()}
 
+import json
+print(json.dumps(default, indent=True))
+# parse cmdline args passing default values
+arguments = parse_args(default)
+print(json.dumps(arguments, indent=True))
+
+# load the config file
 try:
-	fh = file(os.path.expandvars(config_file))
+	fh = open(os.path.expandvars(arguments["config"]))
 	config = json.load(fh)
-	config = merge_config(config)
-except:
-	print "couldn't load default configuration file, using default values"
+	config = merge_config(config, default)
+except (FileNotFoundError, json.decoder.JSONDecodeError) as e:
+	print("couldn't load configuration file, using default values", file=sys.stderr)
 	config = default
 
-arguments = parse_args(config)
+print(json.dumps(config, indent=True))
 
-if arguments["config"] != default["config"]:
-	try:
-		fh = file(os.path.expandvars(arguments["config"]))
-		custom = json.load(fh)
-		custom = merge_config(custom)
-	except:
-		print "couldn't load given configuration file, using defaults"
-		custom = config
-	else:
-		arguments = parse_args(custom)
-else:
-	custom = config
+# parse cmdline args again, overriding values from config file
+config = merge_config(parse_args(config), config)
+print(json.dumps(config, indent=True))
 
+del arguments

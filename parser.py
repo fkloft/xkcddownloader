@@ -1,6 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import urllib2, HTMLParser, re
+import re
+import requests
 
 def get_info(comic=None):
 	"Gets the information about a comic."
@@ -11,81 +12,52 @@ def get_info(comic=None):
 		except TypeError:
 			raise TypeError("Comic must be an integer or None")
 	
-	parser = HTMLParser.HTMLParser()
-	def unescape(string):
-		string = parser.unescape(string.decode("utf-8"))
-		return string
-	
 	if comic is None:
-		req = urllib2.urlopen("http://xkcd.com/")
+		req = requests.get("https://xkcd.com/info.0.json")
 	else:
 		try:
-			req = urllib2.urlopen("http://xkcd.com/%d"%comic)
-		except urllib2.HTTPError:
-			raise ValueError("Invalid comic ID % 2d" % comic)
+			req = requests.get("https://xkcd.com/%d/info.0.json" % comic)
+		except 2:
+			raise ValueError("Invalid comic ID %d" % comic)
 	
-	line = req.readline()
-	while not ' id="middleContent"' in line:
-		line = req.readline()
+	info = req.json()
 	
-	while not '<h1>' in line:
-		line = req.readline()
+	link = info["link"]
 	
-	match = re.search('<h1>(.+)<\/h1>', line)
-	title = unescape(match.group(1))
+	if link.startswith("//"):
+		link = "https:" + link
 	
-	while not '<img ' in line:
-		line = req.readline()
-	
-	match = re.search('src="([^"]+)"', line)
-	src = match.group(1)
-	
-	match = re.search('title="([^"]+)"', line)
-	desc = unescape(match.group(1))
-	
-	link = None
-	largepage = None
 	large = None
-	match = re.search('<a href="([^"]+)"', line)
-	if match:
-		link = unescape(match.group(1))
-		match = re.search("^http://xkcd\.com/\d+[_/]large/$", link)
-		if match:
-			largepage = link
-			content = urllib2.urlopen(link)
-			match = re.search('<img src="(http://imgs\.xkcd\.com/comics/.*\.png)">', content.read())
+	if link:
+		if re.search("^https?://xkcd\.com/\d+[_/]large/$", link):
+			content = requests.get(link)
+			match = re.search('<img(?:\s+[^>]*)*\ssrc="(https?://imgs\.xkcd\.com/[^"]+)"', content.text)
 			if match:
-				large = match.group(1)
-		if re.sub("_small","",src) == link\
-		or re.sub("_large","",link) == src:
-			large = link
-	
-	if comic is None:
-		while not 'Permanent link' in line:
-			line = req.readline()
+				link = match.group(1)
+				if link.startswith("//"):
+					link = "https:" + link
 		
-		match = re.search('http://xkcd.com/(\d+)/', line)
-		comic = int(match.group(1))
+		if re.search("https?://(?:[a-z0-9]+\.)*xkcd.com/", link) and \
+			requests.head(link, allow_redirects=True).headers["content-type"].startswith("image/"):
+			large = link
+	info["large"] = large
 	
-	req.close()
-	return \
-	{
-		"comic":     comic,
-		"title":     title,
-		"image":     src,
-		"desc":      desc,
-		"link":      link,
-		"large":     large,
-		"largepage": largepage
-	}
+	return info
 
 if __name__ == "__main__":
 	#print get_info()
-	for i in (191, 256, 273, 351, 426, 472, 482, 514, 609, 657, 681, 802):
+	for i in (
+		191, 256, 273, 351, 426, 472, 482, 514, 609, 657, 681, 802, 832, 850, 851,
+		871, 930, 980, 1000, 1017, 1031, 1040, 1052, 1071, 1079, 1080, 1104, 1127,
+		1169, 1190, 1196, 1212, 1256, 1298, 1389, 1392, 1407, 1461, 1488, 1491, 1506,
+		1509, 1525, 1551, 1572, 1688, 1723, 1799,
+	):
 		a=get_info(i)
-		del a["title"]
-		del a["desc"]
-		print a
+		del a["transcript"]
+		del a["alt"]
+		del a["news"]
+		import json
+		print(json.dumps(a, indent=True, sort_keys=True))
 
 
 
